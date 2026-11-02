@@ -1,7 +1,7 @@
 # @yieldstream/sdk
 
 TypeScript client and Merkle tooling for the [YieldStream
-distributor](https://github.com/CHASE3020/yieldstream-contract) — a
+distributor](https://github.com/yieldstream-org/yieldstream-contract) — a
 multi-tenant Merkle claim protocol on Stellar/Soroban.
 
 **Status: scaffold.** The hashing core is deliberately unimplemented — it is
