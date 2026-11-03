@@ -29,3 +29,9 @@ criteria; comment to be assigned before starting.
 ## License
 
 Contributions are dual-licensed MIT / Apache-2.0 at the recipient's option.
+
+## Code of conduct
+
+Participation in this repository and every other `yieldstream-org`
+space is governed by [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Reporting
+concerns is described there.
