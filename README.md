@@ -1,4 +1,15 @@
+<div align="center">
+<img src="https://raw.githubusercontent.com/yieldstream-org/yieldstream-app/main/app/icon.svg" alt="YieldStream logo" width="80" height="80" />
+
 # @yieldstream/sdk
+
+[![CI](https://github.com/yieldstream-org/yieldstream-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/yieldstream-org/yieldstream-sdk/actions/workflows/ci.yml)
+[![Target](https://img.shields.io/badge/node-ES2022-informational)](https://nodejs.org)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
+
+[Contract](https://github.com/yieldstream-org/yieldstream-contract) · [App](https://github.com/yieldstream-org/yieldstream-app) · [Issues](https://github.com/yieldstream-org/yieldstream-sdk/issues)
+
+</div>
 
 TypeScript client and Merkle tooling for the [YieldStream
 distributor](https://github.com/yieldstream-org/yieldstream-contract) — a
@@ -42,6 +53,20 @@ Pick issue #1 (leaf hashing conformance) or #2 (tree builder). The skipped
 suites in `conformance.test.ts` define done: un-skip them in your PR and see
 them pass. Rules of the road in `CONTRIBUTING.md`; protocol invariants in the
 contract repo's `docs/ISSUE_BACKLOG.md`.
+
+## Maintainers
+
+| | |
+|---|---|
+| Owner / lead | [@CHASE3020](https://github.com/CHASE3020) |
+| Triage | Applications and PRs answered within 48h, review within 5 days |
+| Security | [Private disclosure](https://github.com/yieldstream-org/yieldstream-sdk/security/advisories/new) — see [SECURITY.md](SECURITY.md) |
+
+## Contributors
+
+<a href="https://contrib.rocks/image?repo=yieldstream-org/yieldstream-sdk">
+<img src="https://contrib.rocks/image?repo=yieldstream-org/yieldstream-sdk" alt="Contributors" />
+</a>
 
 ## License
 
