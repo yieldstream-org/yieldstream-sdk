@@ -7,7 +7,7 @@
 [![Target](https://img.shields.io/badge/node-ES2022-informational)](https://nodejs.org)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 
-[Contract](https://github.com/yieldstream-org/yieldstream-contract) · [App](https://github.com/yieldstream-org/yieldstream-app) · [Issues](https://github.com/yieldstream-org/yieldstream-sdk/issues)
+[Contract](https://github.com/yieldstream-org/yieldstream-contract) · [App](https://github.com/yieldstream-org/yieldstream-app) · [Docs](https://yieldstream-protocol.vercel.app/docs) · [Issues](https://github.com/yieldstream-org/yieldstream-sdk/issues)
 
 </div>
 
@@ -51,7 +51,9 @@ npm test
 
 Pick issue #1 (leaf hashing conformance) or #2 (tree builder). The skipped
 suites in `conformance.test.ts` define done: un-skip them in your PR and see
-them pass. Rules of the road in `CONTRIBUTING.md`; protocol invariants in the
+them pass. Rules of the road in `CONTRIBUTING.md`; the exact leaf/node encoding
+is specified in the [protocol mechanics
+doc](https://yieldstream-protocol.vercel.app/docs/mechanics) and in the
 contract repo's `docs/ISSUE_BACKLOG.md`.
 
 ## Maintainers
