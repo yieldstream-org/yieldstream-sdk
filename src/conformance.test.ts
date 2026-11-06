@@ -137,7 +137,9 @@ describe("YieldStreamClient typed client", () => {
       numRecipients: tree.num_recipients,
       endTime: 1700000000,
     });
-    expect(op.body.type).toBe("invokeHostFunction");
+    const body = typeof (op as any).body === "function" ? (op as any).body() : (op as any).body;
+    const bodyType = body?.switch ? body.switch().name : body?.type;
+    expect(bodyType).toBe("invokeHostFunction");
   });
 
   it("builds claim operation", () => {
@@ -150,7 +152,9 @@ describe("YieldStreamClient typed client", () => {
       amount: claim.amount,
       proof: claim.proof_hex,
     });
-    expect(op.body.type).toBe("invokeHostFunction");
+    const body = typeof (op as any).body === "function" ? (op as any).body() : (op as any).body;
+    const bodyType = body?.switch ? body.switch().name : body?.type;
+    expect(bodyType).toBe("invokeHostFunction");
   });
 
   it("finds proof for wallet in tree", () => {
