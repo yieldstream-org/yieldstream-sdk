@@ -11,65 +11,146 @@
 
 </div>
 
-TypeScript client and Merkle tooling for the [YieldStream
-distributor](https://github.com/yieldstream-org/yieldstream-contract) — a
-multi-tenant Merkle claim protocol on Stellar/Soroban.
+TypeScript client and Merkle proof tooling for the [YieldStream distributor](https://github.com/yieldstream-org/yieldstream-contract) — a multi-tenant Merkle claim protocol on Stellar/Soroban.
 
-**Status: scaffold.** The hashing core is deliberately unimplemented — it is
-the flagship contributor work in issues #1/#2, pinned by cross-language
-conformance tests against the contract's canonical vectors.
+---
 
-## What this package will provide
+## Features
 
-- `computeLeaf` — leaf hashing byte-identical to the Rust contract
-  (SHA-256, RFC 6962 domain separation, XDR encodings)
-- `buildTree` / `generateProof` — recipient CSV → root + proofs for frontends
-  and issuers
-- Transaction builders for `create_distribution` / `claim` / `claim_many` on
-  `@stellar/sdk`, Freighter-friendly
-- Event decoding helpers matching `docs/EVENTS.md`
+- **Byte-Identical Merkle Engine**: `computeLeaf`, `hashPair`, and `buildTree` match the Rust Soroban contract's XDR-encoded leaf hashing and RFC 6962 domain separation byte-for-byte (validated against `test-vectors/merkle_v1.json`).
+- **Typed Protocol Client**: `YieldStreamClient` with contract address binding, RPC simulation view queries (`getDistribution`, `isClaimed`, `getVersion`, `getAdmin`), and transaction builders.
+- **Freighter Wallet Ready**: Built for `@stellar/stellar-sdk` and `@stellar/freighter-api` integration for web frontends.
+- **Lifecycle Event Decoding**: Decodes contract events (`created`, `claimed`, `cancel`, `swept`, `upgrade`).
 
-## Layout
+---
 
-```
-src/
-  types.ts            # vector + recipient formats
-  merkle.ts           # hashing spec stubs (issues #1, #2)
-  conformance.test.ts # pinned to test-vectors/merkle_v1.json (copied from the contract repo)
-test-vectors/         # canonical vectors — DO NOT hand-edit; regenerate via the contract suite
+## Installation
+
+```bash
+npm install @yieldstream/sdk @stellar/stellar-sdk
 ```
 
-## Development
+---
+
+## Quickstart: Copy-Paste Example
+
+### 1. Generating a Campaign Tree & Proofs (Creator / Issuer)
+
+```typescript
+import { generateTree, YieldStreamClient } from "@yieldstream/sdk";
+
+// Define campaign recipient allocations
+const recipients = [
+  { address: "GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMADI", amount: 100_000_000n }, // 10.0 tokens (7 decimals)
+  { address: "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7", amount: 250_000_000n }, // 25.0 tokens
+  { address: "GBLA4V54TC6K5544SZB7F24JYCJQ3B44673B3U6I4B624CYE2Z2Z2ABC", amount: 500_000_000n }, // 50.0 tokens
+];
+
+// Build the deterministic Merkle tree for campaign ID 1
+const distributionId = 1;
+const tree = generateTree(distributionId, recipients);
+
+console.log("Root Hex:", tree.rootHex);
+console.log("Total tokens:", tree.totalAmount);
+
+// Find the claim proof for a specific wallet
+const targetWallet = "GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMADI";
+const userClaim = tree.proofs.find((p) => p.recipient === targetWallet);
+
+console.log("User Leaf Hash:", userClaim?.leafHex);
+console.log("Inclusion Proof:", userClaim?.proofHex);
+```
+
+### 2. Creating a Campaign on Stellar / Soroban
+
+```typescript
+import { YieldStreamClient } from "@yieldstream/sdk";
+
+const client = new YieldStreamClient({
+  contractId: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+  rpcUrl: "https://soroban-testnet.stellar.org",
+});
+
+// Build transaction to create and fund the distribution
+const tx = await client.buildCreateCampaignTx({
+  creator: "GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMADI",
+  token: "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWUIE3USNONGSBEQECU",
+  merkleRoot: tree.root,
+  totalAmount: tree.totalAmount,
+  numRecipients: tree.numRecipients,
+  endTime: 1750000000n, // Unix timestamp (0 for no expiry)
+});
+
+// Sign with Freighter and submit:
+// const signedTxXdr = await signTransaction(tx.toXDR(), { networkPassphrase: client.networkPassphrase });
+// const result = await client.server.sendTransaction(new Transaction(signedTxXdr, client.networkPassphrase));
+```
+
+### 3. Claiming Allocations (Frontend / User)
+
+```typescript
+import { YieldStreamClient } from "@yieldstream/sdk";
+
+const client = new YieldStreamClient({
+  contractId: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+});
+
+// Check if wallet already claimed
+const alreadyClaimed = await client.isClaimed(distributionId, userClaim.index);
+if (alreadyClaimed) {
+  console.log("Allocation already claimed!");
+} else {
+  // Build claim transaction
+  const claimTx = await client.buildClaimTx({
+    distributionId,
+    index: userClaim.index,
+    recipient: userClaim.recipient,
+    amount: userClaim.amount,
+    proof: userClaim.proofHex,
+  });
+
+  // Sign via Freighter extension:
+  // import { signTransaction } from "@stellar/freighter-api";
+  // const signed = await signTransaction(claimTx.toXDR(), { networkPassphrase: client.networkPassphrase });
+}
+```
+
+---
+
+## API Reference
+
+### Merkle Core (`@yieldstream/sdk/merkle`)
+- `computeLeaf(distributionId, index, recipientAddress, amount): Uint8Array` — Generates canonical leaf hash.
+- `hashPair(a, b): Uint8Array` — Sibling sorted-pair hasher.
+- `buildTree(leaves): { root, proofs }` — Power-of-two padded Merkle tree constructor.
+- `generateTree(distributionId, recipients): TreeResult` — End-to-end tree generator with hex outputs.
+- `verifyProof(proof, root, leaf): boolean` — Off-chain inclusion verification.
+
+### Client (`YieldStreamClient`)
+- `buildCreateCampaignTx(params, options): Promise<Transaction>`
+- `buildClaimTx(params, options): Promise<Transaction>`
+- `buildClaimManyTx(claims, options): Promise<Transaction>`
+- `buildCancelTx(distributionId, creator, options): Promise<Transaction>`
+- `buildSweepTx(distributionId, creator, toAddress, options): Promise<Transaction>`
+- `buildUpgradeTx(admin, newWasmHash, options): Promise<Transaction>`
+- `getDistribution(distributionId): Promise<Distribution>`
+- `isClaimed(distributionId, index): Promise<boolean>`
+- `getVersion(): Promise<number>`
+- `getAdmin(): Promise<string>`
+
+---
+
+## Development & Testing
 
 ```bash
 npm install
-npm run typecheck
-npm test
+npm run typecheck   # Typecheck against TypeScript strict mode
+npm run build       # Build distribution bundle with declarations & sourcemaps
+npm test            # Run Vitest test suite including Rust cross-language vectors
 ```
 
-## Contributing
-
-Pick issue #1 (leaf hashing conformance) or #2 (tree builder). The skipped
-suites in `conformance.test.ts` define done: un-skip them in your PR and see
-them pass. Rules of the road in `CONTRIBUTING.md`; the exact leaf/node encoding
-is specified in the [protocol mechanics
-doc](https://yieldstream-protocol.vercel.app/docs/mechanics) and in the
-contract repo's `docs/ISSUE_BACKLOG.md`.
-
-## Maintainers
-
-| | |
-|---|---|
-| Owner / lead | [@CHASE3020](https://github.com/CHASE3020) |
-| Triage | Applications and PRs answered within 48h, review within 5 days |
-| Security | [Private disclosure](https://github.com/yieldstream-org/yieldstream-sdk/security/advisories/new) — see [SECURITY.md](SECURITY.md) |
-
-## Contributors
-
-<a href="https://contrib.rocks/image?repo=yieldstream-org/yieldstream-sdk">
-<img src="https://contrib.rocks/image?repo=yieldstream-org/yieldstream-sdk" alt="Contributors" />
-</a>
+---
 
 ## License
 
-Dual MIT / Apache-2.0, at your option.
+Dual licensed under MIT OR Apache-2.0, at your option.
